@@ -11,6 +11,8 @@ Scope of THIS module: the data + security foundation that everything else binds 
 Compute (per-component least-privilege Lambdas + Step Functions) is layered on in a
 later module so this foundation can be deployed and validated on its own.
 """
+import json
+
 from aws_cdk import (
     Stack,
     RemovalPolicy,
@@ -24,6 +26,8 @@ from aws_cdk import (
     aws_secretsmanager as secrets,
     aws_stepfunctions as sfn,
     aws_stepfunctions_tasks as tasks,
+    aws_apprunner as apprunner,
+    aws_ecr_assets as ecr_assets,
 )
 from constructs import Construct
 
@@ -136,8 +140,7 @@ class AmbitCodebookStack(Stack):
             resources=["arn:aws:bedrock:*::foundation-model/*",
                        f"arn:aws:bedrock:{self.region}:{self.account}:inference-profile/*"],
         ))
-        resolve_fn = mkfn("ResolveFn", "resolve_validate")
-        build_fn = mkfn("BuildFn", "build_draft")
+        resolve_fn = mkfn("ResolveFn", "resolve_build", timeout=300)
         eval_fn = mkfn("EvalFn", "eval_gate", timeout=300)
         publish_fn = mkfn("PublishFn", "publish", timeout=90)
         publish_fn.add_to_role_policy(iam.PolicyStatement(
@@ -149,8 +152,7 @@ class AmbitCodebookStack(Stack):
             return tasks.LambdaInvoke(self, cid, lambda_function=fn, payload_response_only=True)
 
         t_research = task("ResearchCandidates", research_fn)
-        t_resolve = task("ResolveAndValidate", resolve_fn)
-        t_build = task("BuildDraft", build_fn)
+        t_resolve = task("ResolveAndBuild", resolve_fn)
         t_eval = task("EvalGate", eval_fn)
         t_publish = task("PublishVersion", publish_fn)
 
@@ -162,7 +164,7 @@ class AmbitCodebookStack(Stack):
             .when(sfn.Condition.boolean_equals("$.eval.passed", False), eval_failed)
             .otherwise(t_publish.next(draft_ready))
         )
-        definition = t_research.next(t_resolve).next(t_build).next(t_eval).next(gate)
+        definition = t_research.next(t_resolve).next(t_eval).next(gate)
         state_machine = sfn.StateMachine(
             self, "CodebookPipeline",
             definition_body=sfn.DefinitionBody.from_chainable(definition),
@@ -171,6 +173,77 @@ class AmbitCodebookStack(Stack):
         )
         self.state_machine = state_machine
 
+        # ===================================================================
+        # Studio UI on App Runner: password-gated, with a scoped instance role.
+        # The role can use the app DB identity (denied PHI), start/read Step
+        # Functions executions, and read the two secrets -- nothing else. No
+        # Bedrock, no admin secret, no restricted schema: the UI cannot reach PHI.
+        # ===================================================================
+        studio_login = secrets.Secret(
+            self, "StudioLogin",
+            generate_secret_string=secrets.SecretStringGenerator(
+                secret_string_template=json.dumps({"username": "ambit"}),
+                generate_string_key="password",
+                password_length=20,
+                exclude_punctuation=True,
+            ),
+        )
+        studio_image = ecr_assets.DockerImageAsset(self, "StudioImage", directory=".")
+
+        access_role = iam.Role(
+            self, "StudioAccessRole",
+            assumed_by=iam.ServicePrincipal("build.apprunner.amazonaws.com"),
+        )
+        studio_image.repository.grant_pull(access_role)
+
+        studio_role = iam.Role(
+            self, "StudioInstanceRole",
+            assumed_by=iam.ServicePrincipal("tasks.apprunner.amazonaws.com"),
+        )
+        studio_role.add_to_policy(data_api)
+        app_secret.grant_read(studio_role)
+        studio_login.grant_read(studio_role)
+        state_machine.grant_start_execution(studio_role)
+        state_machine.grant_read(studio_role)
+
+        studio = apprunner.CfnService(
+            self, "StudioService",
+            service_name="ambit-codebook-studio",
+            source_configuration=apprunner.CfnService.SourceConfigurationProperty(
+                auto_deployments_enabled=False,
+                authentication_configuration=apprunner.CfnService.AuthenticationConfigurationProperty(
+                    access_role_arn=access_role.role_arn),
+                image_repository=apprunner.CfnService.ImageRepositoryProperty(
+                    image_identifier=studio_image.image_uri,
+                    image_repository_type="ECR",
+                    image_configuration=apprunner.CfnService.ImageConfigurationProperty(
+                        port="8501",
+                        runtime_environment_variables=[
+                            apprunner.CfnService.KeyValuePairProperty(name="AWS_REGION", value=self.region),
+                            apprunner.CfnService.KeyValuePairProperty(name="CLUSTER_ARN", value=db.cluster_arn),
+                            apprunner.CfnService.KeyValuePairProperty(name="APP_SECRET_ARN", value=app_secret.secret_arn),
+                            apprunner.CfnService.KeyValuePairProperty(name="DB_NAME", value="codebook"),
+                            apprunner.CfnService.KeyValuePairProperty(name="REF_BUCKET", value=ref_bucket.bucket_name),
+                            apprunner.CfnService.KeyValuePairProperty(name="STATE_MACHINE_ARN", value=state_machine.state_machine_arn),
+                        ],
+                        runtime_environment_secrets=[
+                            apprunner.CfnService.KeyValuePairProperty(
+                                name="STUDIO_USERNAME", value=f"{studio_login.secret_arn}:username::"),
+                            apprunner.CfnService.KeyValuePairProperty(
+                                name="STUDIO_PASSWORD", value=f"{studio_login.secret_arn}:password::"),
+                        ],
+                    ),
+                ),
+            ),
+            instance_configuration=apprunner.CfnService.InstanceConfigurationProperty(
+                cpu="1 vCPU", memory="2 GB", instance_role_arn=studio_role.role_arn),
+            health_check_configuration=apprunner.CfnService.HealthCheckConfigurationProperty(
+                protocol="HTTP", path="/_stcore/health",
+                interval=10, timeout=5, healthy_threshold=1, unhealthy_threshold=5),
+        )
+
+        CfnOutput(self, "StudioUrl", value=f"https://{studio.attr_service_url}")
+        CfnOutput(self, "StudioLoginSecretArn", value=studio_login.secret_arn)
         CfnOutput(self, "StateMachineArn", value=state_machine.state_machine_arn)
         CfnOutput(self, "ClusterArn", value=db.cluster_arn)
         CfnOutput(self, "SecretArn", value=db.secret.secret_arn)

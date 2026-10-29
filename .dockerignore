@@ -1,0 +1,14 @@
+data-pack/
+cdk.out/
+.git/
+node_modules/
+.venv/
+venv/
+__pycache__/
+out/
+*.log
+synth_err.txt
+cdk-outputs.json
+tests/
+evals/
+docs/

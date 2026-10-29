@@ -33,21 +33,16 @@ def research(event, _ctx=None):
     return {**event, "candidates": candidates, "candidate_count": len(candidates)}
 
 
-def resolve_validate(event, _ctx=None):
+def resolve_build(event, _ctx=None):
+    # Resolve + validate + assemble the draft in one step, so the (potentially large) set
+    # of resolved rows never travels through the Step Functions state (256 KB limit).
     event = _state(event)
     tools = ReferenceTools()
-    rows = resolve(tools, event["disease_area"], event.get("candidates", []),
-                   event.get("version", "2026-10"))
-    return {**event, "rows": rows}
-
-
-def build_draft(event, _ctx=None):
-    event = _state(event)
     version = event.get("version", "2026-10")
-    cid, ver = build_codebook(event["disease_area"], event.get("rows", []), version)
-    state = {k: v for k, v in event.items() if k != "rows"}  # drop rows to keep state small
-    return {**state, "codebook_id": cid, "codebook_version": ver,
-            "row_count": len(event.get("rows", []))}
+    rows = resolve(tools, event["disease_area"], event.get("candidates", []), version)
+    cid, ver = build_codebook(event["disease_area"], rows, version)
+    state = {k: v for k, v in event.items() if k != "candidates"}
+    return {**state, "codebook_id": cid, "codebook_version": ver, "row_count": len(rows)}
 
 
 def eval_gate(event, _ctx=None):

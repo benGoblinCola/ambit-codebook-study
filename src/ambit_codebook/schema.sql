@@ -235,6 +235,7 @@ CREATE TABLE IF NOT EXISTS codebook (
     validation_status   TEXT,                 -- valid | rejected: <reason>
     claims_frequency    INTEGER,
     reference_versions  JSONB,
+    audit_trail         JSONB,               -- ordered derivation path for this code
     review_status       TEXT,
     reviewed_by         TEXT,
     reviewed_at         TIMESTAMPTZ,

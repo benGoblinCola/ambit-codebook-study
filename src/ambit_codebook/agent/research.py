@@ -80,13 +80,33 @@ def _run_tool(tools: ReferenceTools, name: str, inp: dict) -> dict:
 
 def _parse_candidates(text: str) -> list[dict]:
     m = re.search(r"\[.*\]", text, re.DOTALL)
-    if not m:
-        return []
-    try:
-        data = json.loads(m.group(0))
-        return [c for c in data if isinstance(c, dict) and c.get("drug")]
-    except json.JSONDecodeError:
-        return []
+    if m:
+        try:
+            data = json.loads(m.group(0))
+            return _dedupe([c for c in data if isinstance(c, dict) and c.get("drug")])
+        except json.JSONDecodeError:
+            pass
+    # Salvage complete objects even if the array was truncated.
+    out = []
+    for om in re.finditer(r"\{[^{}]*\}", text, re.DOTALL):
+        try:
+            o = json.loads(om.group(0))
+            if isinstance(o, dict) and o.get("drug"):
+                out.append(o)
+        except json.JSONDecodeError:
+            pass
+    return _dedupe(out)
+
+
+def _dedupe(cands: list[dict]) -> list[dict]:
+    seen, out = set(), []
+    for c in cands:
+        key = ((c.get("drug") or "").lower(), (c.get("substance") or "").lower())
+        if key in seen:
+            continue
+        seen.add(key)
+        out.append(c)
+    return out
 
 
 def _cache_path(disease: str) -> Path:
@@ -124,6 +144,7 @@ def _run_bedrock(disease_area: str, tools: ReferenceTools, model_id: str,
     messages = [{"role": "user", "content": [
         {"text": f"Disease area: {disease_area}\nPropose the grounded candidate drugs."}
     ]}]
+    accumulated = ""
     for _ in range(max_turns):
         t0 = time.perf_counter()
         resp = client.converse(
@@ -131,23 +152,27 @@ def _run_bedrock(disease_area: str, tools: ReferenceTools, model_id: str,
             system=[{"text": SYSTEM}],
             messages=messages,
             toolConfig=TOOLS,
-            inferenceConfig={"maxTokens": 2000, "temperature": 0},
+            inferenceConfig={"temperature": 0},  # no maxTokens -> model default ceiling
         )
-        record("model", "bedrock.converse", ms=round((time.perf_counter() - t0) * 1000, 1),
-               stop=resp.get("stopReason"))
+        stop = resp.get("stopReason")
+        record("model", "bedrock.converse",
+               ms=round((time.perf_counter() - t0) * 1000, 1), stop=stop)
         out = resp["output"]["message"]
         messages.append(out)
-        if resp.get("stopReason") == "tool_use":
-            results = []
-            for c in out["content"]:
-                tu = c.get("toolUse")
-                if not tu:
-                    continue
-                res = _run_tool(tools, tu["name"], tu.get("input", {}))
-                results.append({"toolResult": {"toolUseId": tu["toolUseId"],
-                                                "content": [{"json": res}]}})
+
+        tool_uses = [c["toolUse"] for c in out["content"] if c.get("toolUse")]
+        if tool_uses:
+            results = [{"toolResult": {"toolUseId": tu["toolUseId"],
+                                       "content": [{"json": _run_tool(tools, tu["name"], tu.get("input", {}))}]}}
+                       for tu in tool_uses]
             messages.append({"role": "user", "content": results})
             continue
-        text = "".join(c.get("text", "") for c in out["content"])
-        return _parse_candidates(text)
-    return []
+
+        accumulated += "".join(c.get("text", "") for c in out["content"])
+        if stop == "max_tokens":
+            # Keep the partial and ask for the rest; concatenation reconstructs the JSON.
+            messages.append({"role": "user", "content": [
+                {"text": "Continue exactly where you left off. Output only the remaining JSON."}]})
+            continue
+        return _parse_candidates(accumulated)
+    return _parse_candidates(accumulated)

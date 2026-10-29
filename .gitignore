@@ -25,5 +25,8 @@ data-pack/
 synth_err.txt
 cdk-outputs.json
 
+# local tunnel binary (not part of the project)
+cloudflared.exe
+
 # Local build output (keep the sample codebook deliverable in out/)
 *.log

@@ -1,0 +1,176 @@
+[
+  {
+    "drug": "Methotrexate",
+    "substance": "METHOTREXATE",
+    "rationale": "First-line DMARD for rheumatoid arthritis, inhibits dihydrofolate reductase to reduce inflammation",
+    "evidence": "Methotrexate - 0143-9516"
+  },
+  {
+    "drug": "Adalimumab",
+    "substance": "ADALIMUMAB",
+    "rationale": "TNF-alpha inhibitor biologic used for moderate to severe rheumatoid arthritis",
+    "evidence": "AMJEVITA - 55513-399"
+  },
+  {
+    "drug": "Etanercept",
+    "substance": "ETANERCEPT",
+    "rationale": "TNF-alpha inhibitor biologic for moderate to severe rheumatoid arthritis",
+    "evidence": "ENBREL - 58406-010"
+  },
+  {
+    "drug": "Infliximab",
+    "substance": "INFLIXIMAB",
+    "rationale": "TNF-alpha inhibitor biologic administered intravenously for rheumatoid arthritis",
+    "evidence": "REMICADE - 57894-030"
+  },
+  {
+    "drug": "Rituximab",
+    "substance": "RITUXIMAB",
+    "rationale": "Anti-CD20 monoclonal antibody for moderate to severe rheumatoid arthritis inadequately responsive to TNF inhibitors",
+    "evidence": "Rituxan - 50242-051"
+  },
+  {
+    "drug": "Tocilizumab",
+    "substance": "TOCILIZUMAB",
+    "rationale": "IL-6 receptor antagonist for moderate to severe rheumatoid arthritis",
+    "evidence": "ACTEMRA - 50242-135"
+  },
+  {
+    "drug": "Abatacept",
+    "substance": "ABATACEPT",
+    "rationale": "T-cell costimulation modulator for moderate to severe rheumatoid arthritis",
+    "evidence": "ORENCIA - 0003-2187"
+  },
+  {
+    "drug": "Tofacitinib",
+    "substance": "TOFACITINIB CITRATE",
+    "rationale": "JAK inhibitor for moderate to severe rheumatoid arthritis",
+    "evidence": "XELJANZ - 0069-1001"
+  },
+  {
+    "drug": "Leflunomide",
+    "substance": "LEFLUNOMIDE",
+    "rationale": "DMARD that inhibits pyrimidine synthesis for active rheumatoid arthritis",
+    "evidence": "Arava - 0088-2160"
+  },
+  {
+    "drug": "Hydroxychloroquine",
+    "substance": "HYDROXYCHLOROQUINE SULFATE",
+    "rationale": "Antimalarial DMARD used for mild to moderate rheumatoid arthritis",
+    "evidence": "Hydroxychloroquine Sulfate - 0093-2401"
+  },
+  {
+    "drug": "Sulfasalazine",
+    "substance": "SULFASALAZINE",
+    "rationale": "DMARD with anti-inflammatory properties for rheumatoid arthritis",
+    "evidence": "Azulfidine - 0013-0101"
+  },
+  {
+    "drug": "Prednisone",
+    "substance": "PREDNISONE",
+    "rationale": "Corticosteroid for short-term management of rheumatoid arthritis flares and bridging therapy",
+    "evidence": "PredniSONE - 0054-0017"
+  },
+  {
+    "drug": "Certolizumab",
+    "substance": "CERTOLIZUMAB PEGOL",
+    "rationale": "PEGylated TNF-alpha inhibitor for moderate to severe rheumatoid arthritis",
+    "evidence": "Cimzia - 50474-710"
+  },
+  {
+    "drug": "Golimumab",
+    "substance": "GOLIMUMAB",
+    "rationale": "TNF-alpha inhibitor for moderate to severe rheumatoid arthritis",
+    "evidence": "Simponi - 57894-070"
+  },
+  {
+    "drug": "Baricitinib",
+    "substance": "BARICITINIB",
+    "rationale": "JAK1/JAK2 inhibitor for moderate to severe rheumatoid arthritis",
+    "evidence": "Olumiant - 0002-4182"
+  },
+  {
+    "drug": "Upadacitinib",
+    "substance": "UPADACITINIB",
+    "rationale": "Selective JAK1 inhibitor for moderate to severe rheumatoid arthritis",
+    "evidence": "Rinvoq - 0074-1043"
+  },
+  {
+    "drug": "Sarilumab",
+    "substance": "SARILUMAB",
+    "rationale": "IL-6 receptor antagonist for moderate to severe rheumatoid arthritis",
+    "evidence": "KEVZARA - 0024-5908"
+  },
+  {
+    "drug": "Anakinra",
+    "substance": "ANAKINRA",
+    "rationale": "IL-1 receptor antagonist for rheumatoid arthritis",
+    "evidence": "Kineret - 66658-234"
+  },
+  {
+    "drug": "Azathioprine",
+    "substance": "AZATHIOPRINE",
+    "rationale": "Immunosuppressive DMARD used as alternative therapy for rheumatoid arthritis",
+    "evidence": "IMURAN - 54766-590"
+  },
+  {
+    "drug": "Cyclosporine",
+    "substance": "CYCLOSPORINE",
+    "rationale": "Immunosuppressive agent for severe rheumatoid arthritis refractory to other DMARDs",
+    "evidence": "Neoral - 0078-0246"
+  },
+  {
+    "drug": "Methylprednisolone",
+    "substance": "METHYLPREDNISOLONE",
+    "rationale": "Corticosteroid for rheumatoid arthritis flares, available in oral and injectable forms",
+    "evidence": "Medrol - 0009-0020"
+  },
+  {
+    "drug": "Triamcinolone",
+    "substance": "TRIAMCINOLONE ACETONIDE",
+    "rationale": "Corticosteroid for intra-articular injection in rheumatoid arthritis joint inflammation",
+    "evidence": "KENALOG-40 - 0003-0293"
+  },
+  {
+    "drug": "Meloxicam",
+    "substance": "MELOXICAM",
+    "rationale": "NSAID for symptomatic relief of pain and inflammation in rheumatoid arthritis",
+    "evidence": "MELOXICAM - 0615-8040"
+  },
+  {
+    "drug": "Celecoxib",
+    "substance": "CELECOXIB",
+    "rationale": "COX-2 selective NSAID for symptomatic treatment of rheumatoid arthritis",
+    "evidence": "Celecoxib - 0591-3982"
+  },
+  {
+    "drug": "Naproxen",
+    "substance": "NAPROXEN SODIUM",
+    "rationale": "NSAID for symptomatic relief of pain and inflammation in rheumatoid arthritis",
+    "evidence": "Naproxen - 0054-3630"
+  },
+  {
+    "drug": "Ibuprofen",
+    "substance": "IBUPROFEN",
+    "rationale": "NSAID for symptomatic relief of pain and inflammation in rheumatoid arthritis",
+    "evidence": "Good Sense Infants Ibuprofen - 0113-0040"
+  },
+  {
+    "drug": "Diclofenac",
+    "substance": "DICLOFENAC SODIUM",
+    "rationale": "NSAID for symptomatic relief of pain and inflammation in rheumatoid arthritis",
+    "evidence": "Voltaren - 0067-8152"
+  },
+  {
+    "drug": "Minocycline",
+    "substance": "MINOCYCLINE HYDROCHLORIDE",
+    "rationale": "Tetracycline antibiotic with anti-inflammatory properties used for mild rheumatoid arthritis",
+    "evidence": "Minocycline Hydrochloride - 0591-5695"
+  },
+  {
+    "drug": "Penicillamine",
+    "substance": "PENICILLAMINE",
+    "rationale": "DMARD historically used for rheumatoid arthritis, now rarely prescribed due to toxicity",
+    "evidence": "Cuprimine - 25010-705"
+  }
+]

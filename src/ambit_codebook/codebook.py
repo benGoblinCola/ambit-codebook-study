@@ -17,7 +17,8 @@ from .trace import record
 SCHEMA_COLS = [
     "codebook_id", "codebook_version", "disease_area", "code", "code_system", "description",
     "group_name", "related_code", "benefit_channel", "billing_unit", "inclusion_rationale",
-    "evidence", "validation_status", "claims_frequency", "reference_versions", "review_status",
+    "evidence", "validation_status", "claims_frequency", "reference_versions", "audit_trail",
+    "review_status",
 ]
 
 
@@ -44,10 +45,11 @@ def build_codebook(disease_area: str, rows: list[dict], version: str,
     insert = (
         "INSERT INTO codebook (codebook_id, codebook_version, disease_area, code, code_system, "
         "description, group_name, related_code, benefit_channel, billing_unit, inclusion_rationale, "
-        "evidence, validation_status, claims_frequency, reference_versions, review_status) VALUES "
+        "evidence, validation_status, claims_frequency, reference_versions, audit_trail, review_status) VALUES "
         "(:codebook_id, :codebook_version, :disease_area, :code, :code_system, :description, "
         ":group_name, :related_code, :benefit_channel, :billing_unit, :inclusion_rationale, "
-        ":evidence, :validation_status, :claims_frequency, CAST(:reference_versions AS JSONB), :review_status)"
+        ":evidence, :validation_status, :claims_frequency, CAST(:reference_versions AS JSONB), "
+        "CAST(:audit_trail AS JSONB), :review_status)"
     )
     params = [{
         "codebook_id": codebook_id, "codebook_version": nxt,
@@ -59,6 +61,7 @@ def build_codebook(disease_area: str, rows: list[dict], version: str,
         "validation_status": r.get("validation_status"),
         "claims_frequency": r.get("claims_frequency"),
         "reference_versions": json.dumps(r.get("reference_versions") or ref_versions),
+        "audit_trail": json.dumps(r.get("audit_trail") or []),
         "review_status": "pending",
     } for r in rows]
     db.batch(insert, params)

@@ -90,12 +90,17 @@ approval), either from the CLI:
 python scripts/approve.py hereditary-angioedema 1 "Dr. Reviewer" approved
 ```
 
-…or from the **review dashboard** — browse versions, inspect every code with its channel /
-billing unit / claims frequency / validation status, and Approve or Reject:
+…or from the **studio dashboard**:
 
 ```bash
 PYTHONPATH=src streamlit run src/ambit_codebook/review_app.py
 ```
+
+The studio has a **chat box** to generate a codebook for any disease on the fly (runs the
+live pipeline), **filters** (code system / channel / validation / text search), an **audit
+trail** that shows the ordered derivation path for any code (agent → NDC lookup → crosswalk
+→ validation → billing rule → claims → decision), and **Approve / Reject** to freeze a
+version.
 
 ## Deliverables in this repo
 
