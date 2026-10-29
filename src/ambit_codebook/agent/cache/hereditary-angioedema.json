@@ -1,0 +1,44 @@
+[
+  {
+    "drug": "Cinryze",
+    "substance": "HUMAN C1-ESTERASE INHIBITOR",
+    "rationale": "C1 esterase inhibitor replacement therapy for prophylaxis and acute treatment of hereditary angioedema attacks",
+    "evidence": "Cinryze, product_ndc: 42227-081"
+  },
+  {
+    "drug": "Ruconest",
+    "substance": "CONESTAT ALFA",
+    "rationale": "Recombinant C1 esterase inhibitor for acute treatment of hereditary angioedema attacks",
+    "evidence": "Ruconest, product_ndc: 71274-350"
+  },
+  {
+    "drug": "Firazyr",
+    "substance": "ICATIBANT ACETATE",
+    "rationale": "Bradykinin B2 receptor antagonist for acute treatment of hereditary angioedema attacks",
+    "evidence": "Firazyr, product_ndc: 54092-702"
+  },
+  {
+    "drug": "Takhzyro",
+    "substance": "LANADELUMAB",
+    "rationale": "Monoclonal antibody kallikrein inhibitor for prophylaxis of hereditary angioedema attacks",
+    "evidence": "TAKHZYRO, product_ndc: 47783-645"
+  },
+  {
+    "drug": "Orladeyo",
+    "substance": "BEROTRALSTAT HYDROCHLORIDE",
+    "rationale": "Oral plasma kallikrein inhibitor for prophylaxis of hereditary angioedema attacks",
+    "evidence": "Orladeyo, product_ndc: 72769-101"
+  },
+  {
+    "drug": "Kalbitor",
+    "substance": "ECALLANTIDE",
+    "rationale": "Plasma kallikrein inhibitor for acute treatment of hereditary angioedema attacks",
+    "evidence": "Kalbitor, product_ndc: 47783-101"
+  },
+  {
+    "drug": "Danazol",
+    "substance": "DANAZOL",
+    "rationale": "Attenuated androgen used for long-term prophylaxis of hereditary angioedema",
+    "evidence": "Danazol, product_ndc: 0527-1368"
+  }
+]

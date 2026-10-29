@@ -1,0 +1,29 @@
+# Python
+.venv/
+venv/
+__pycache__/
+*.pyc
+*.egg-info/
+.pytest_cache/
+
+# CDK
+cdk.out/
+*.d.ts
+
+# Node
+node_modules/
+
+# Secrets / env
+.env
+.env.*
+!.env.example
+
+# Data pack: external public repo (cloned per README), has its own .git; don't commit it
+data-pack/
+
+# CDK synth artifacts / regenerated outputs
+synth_err.txt
+cdk-outputs.json
+
+# Local build output (keep the sample codebook deliverable in out/)
+*.log

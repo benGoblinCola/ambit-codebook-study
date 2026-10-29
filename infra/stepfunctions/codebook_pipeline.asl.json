@@ -1,0 +1,118 @@
+{
+  "Comment": "Ambit codebook generator - HAE slice. AI proposes candidate drugs; deterministic states resolve/validate codes; eval gates publish; a human approves before a version is frozen.",
+  "StartAt": "VerifyManifest",
+  "States": {
+    "VerifyManifest": {
+      "Type": "Task",
+      "Comment": "Check MANIFEST.sha256 for every reference file before trusting the load (E05 reproducibility).",
+      "Resource": "arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:ambit-codebook-verify-manifest",
+      "Next": "LoadReference"
+    },
+    "LoadReference": {
+      "Type": "Task",
+      "Comment": "Land + version each reference release (crosswalk 07/10, HCPCS 07/10, NDC, ICD-10, billing rules, analyst-owned self-admin). One version per release, effective/end dates kept.",
+      "Resource": "arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:ambit-codebook-load-reference",
+      "Next": "ValidateLoad"
+    },
+    "ValidateLoad": {
+      "Type": "Task",
+      "Comment": "Row-count / key / date checks against the prior release. Emits load_ok boolean.",
+      "Resource": "arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:ambit-codebook-validate-load",
+      "Next": "LoadOk?"
+    },
+    "LoadOk?": {
+      "Type": "Choice",
+      "Choices": [
+        { "Variable": "$.load_ok", "BooleanEquals": false, "Next": "LoadFailed" }
+      ],
+      "Default": "ResearchCandidates"
+    },
+    "ResearchCandidates": {
+      "Type": "Task",
+      "Comment": "The ONLY AI step. Bedrock research agent: disease_area -> candidate drugs + rationale + grounding evidence. Proposes, never decides.",
+      "Resource": "arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:ambit-codebook-research-agent",
+      "Parameters": {
+        "disease_area.$": "$.disease_area",
+        "reference_version.$": "$.reference_version"
+      },
+      "Retry": [
+        { "ErrorEquals": ["Bedrock.ThrottlingException", "States.Timeout"], "IntervalSeconds": 2, "MaxAttempts": 4, "BackoffRate": 2.0 }
+      ],
+      "Catch": [
+        { "ErrorEquals": ["States.ALL"], "ResultPath": "$.error", "Next": "ResearchFailed" }
+      ],
+      "ResultPath": "$.candidates",
+      "Next": "ResolveAndValidate"
+    },
+    "ResolveAndValidate": {
+      "Type": "Map",
+      "Comment": "For each candidate: deterministic drug->NDC->J-code as-of-version, apply billing rules (incl. BR-6), validate every code. Unknown/retired codes rejected with a reason, never dropped.",
+      "ItemsPath": "$.candidates",
+      "MaxConcurrency": 8,
+      "Iterator": {
+        "StartAt": "ResolveOne",
+        "States": {
+          "ResolveOne": {
+            "Type": "Task",
+            "Resource": "arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:ambit-codebook-resolve-validate",
+            "End": true
+          }
+        }
+      },
+      "ResultPath": "$.resolved",
+      "Next": "BuildDraft"
+    },
+    "BuildDraft": {
+      "Type": "Task",
+      "Comment": "Assemble resolved + rejected rows into the standard codebook schema; attach reference_versions and aggregate claims_frequency. Status = draft.",
+      "Resource": "arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:ambit-codebook-build-draft",
+      "ResultPath": "$.draft",
+      "Next": "EvalGate"
+    },
+    "EvalGate": {
+      "Type": "Task",
+      "Comment": "Run the eval suite (>=10 scenarios) against the real tools. Emits eval_passed boolean. Release gate.",
+      "Resource": "arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:ambit-codebook-eval-gate",
+      "ResultPath": "$.eval",
+      "Next": "EvalPassed?"
+    },
+    "EvalPassed?": {
+      "Type": "Choice",
+      "Choices": [
+        { "Variable": "$.eval.passed", "BooleanEquals": false, "Next": "EvalFailed" }
+      ],
+      "Default": "AwaitReview"
+    },
+    "AwaitReview": {
+      "Type": "Task",
+      "Comment": "Human approval. Pauses until a named reviewer approves or rejects the draft via the review app (task token callback).",
+      "Resource": "arn:aws:states:::lambda:invoke.waitForTaskToken",
+      "Parameters": {
+        "FunctionName": "ambit-codebook-request-review",
+        "Payload": {
+          "draft.$": "$.draft",
+          "taskToken.$": "$$.Task.Token"
+        }
+      },
+      "ResultPath": "$.review",
+      "Next": "Approved?"
+    },
+    "Approved?": {
+      "Type": "Choice",
+      "Choices": [
+        { "Variable": "$.review.approved", "BooleanEquals": true, "Next": "PublishVersion" }
+      ],
+      "Default": "ReviewRejected"
+    },
+    "PublishVersion": {
+      "Type": "Task",
+      "Comment": "Freeze the approved codebook as an immutable version; write the output CSV + reference_versions manifest.",
+      "Resource": "arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:ambit-codebook-publish",
+      "End": true
+    },
+    "LoadFailed":     { "Type": "Fail", "Error": "LoadValidationFailed", "Cause": "Reference load failed validation; version not published." },
+    "ResearchFailed": { "Type": "Fail", "Error": "ResearchAgentFailed", "Cause": "Bedrock research step failed after retries." },
+    "EvalFailed":     { "Type": "Fail", "Error": "EvalGateFailed", "Cause": "Eval suite did not pass; draft not sent for review." },
+    "ReviewRejected": { "Type": "Fail", "Error": "ReviewRejected", "Cause": "Reviewer rejected the draft codebook." }
+  }
+}

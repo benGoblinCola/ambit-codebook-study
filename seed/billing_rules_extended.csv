@@ -1,0 +1,7 @@
+rule_id,rule_type,match_route,match_dosage_form,match_self_administered,then_channel,then_expects_hcpcs,then_action,note
+BR-1,channel,ORAL,TABLET|CAPSULE|SOLUTION|PELLET,,pharmacy,no,match by NDC,Oral products are dispensed by pharmacies and appear on pharmacy claims.
+BR-2,channel,INTRAVENOUS,,,medical,yes,count in the HCPCS billing unit,Infusions are given by a provider and billed on medical claims.
+BR-3,channel,SUBCUTANEOUS,,Y,both,either,track NDCs and the HCPCS code if one exists,Self-administration status is not in the reference files; decide how to determine it and document your choice.
+BR-4,units,,,,,,billing_units_per_package = package_strength / hcpcs_unit,Example: a 300 mg package on a 1 mg code is 300 billing units.
+BR-5,versioning,,,,,,use the crosswalk version in effect for the analysis period,Never the latest file by default.
+BR-6,channel,SUBCUTANEOUS,,N,medical,yes,count in the HCPCS billing unit,NEW. Subcutaneous drugs administered by a provider (not self-administered) bill on medical claims under a J-code. Complements BR-3 (SC self-administered). Witness: ecallantide/Kalbitor -> J1290.

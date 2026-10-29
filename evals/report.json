@@ -1,0 +1,85 @@
+{
+  "version": "2026-10",
+  "total": 11,
+  "passed": 11,
+  "required_failures": 0,
+  "results": [
+    {
+      "id": "E02-1",
+      "name": "Drug with many NDCs -> one J-code",
+      "required": true,
+      "passed": true,
+      "detail": "J0593 HCPCS rows=1, NDCs->J0593=2"
+    },
+    {
+      "id": "E02-2",
+      "name": "Formulation with no J-code",
+      "required": true,
+      "passed": true,
+      "detail": "HCPCS=0 (want 0); pharmacy NDC rows=6"
+    },
+    {
+      "id": "E02-3",
+      "name": "Fabricated/retired code proposed by model",
+      "required": true,
+      "passed": true,
+      "detail": "rejected: not grounded - exists in HCPCS but is not in the ASP crosswalk for this drug"
+    },
+    {
+      "id": "E02-4",
+      "name": "Mapping changed between crosswalk quarters",
+      "required": true,
+      "passed": true,
+      "detail": "2026-07=['J0640', 'J0641']  2026-10=['J0641', 'J0643']"
+    },
+    {
+      "id": "E02-5",
+      "name": "Self-administered injectable on both channels",
+      "required": true,
+      "passed": true,
+      "detail": "channels=['both'] (want only 'both')"
+    },
+    {
+      "id": "E02-6",
+      "name": "Recently approved drug, no permanent J-code",
+      "required": true,
+      "passed": true,
+      "detail": "HCPCS=0 (want 0); NDC rows=1 flagged pharmacy/both"
+    },
+    {
+      "id": "E02-7",
+      "name": "Confusable disease term (D84.1 vs T78.3)",
+      "required": true,
+      "passed": true,
+      "detail": "D84.1='Defects in the complement system'; T78.3 distinct=True"
+    },
+    {
+      "id": "E02-8",
+      "name": "BR-4 billing-unit math (Takhzyro 150)",
+      "required": false,
+      "passed": true,
+      "detail": "J0593 billing_unit='150 billing units/package' (want 150/pkg)"
+    },
+    {
+      "id": "E02-9",
+      "name": "Effective-date boundary (version pinned)",
+      "required": false,
+      "passed": true,
+      "detail": "pinned both quarters: 07=['J0593'] 10=['J0593']"
+    },
+    {
+      "id": "E02-10",
+      "name": "BR-6 new rule (Kalbitor -> medical/J1290)",
+      "required": false,
+      "passed": true,
+      "detail": "J1290 channel=medical (want medical, not both)"
+    },
+    {
+      "id": "E02-11",
+      "name": "Empty / no-candidate disease",
+      "required": false,
+      "passed": true,
+      "detail": "rows=1; status=rejected: no reference match for candidate"
+    }
+  ]
+}
