@@ -4,6 +4,7 @@ from __future__ import annotations
 import csv
 import io
 import json
+import re
 from collections import Counter
 
 import streamlit as st
@@ -24,6 +25,52 @@ def _csv_bytes(rows: list[dict]) -> bytes:
     for r in rows:
         w.writerow({c: r.get(c) for c in _CSV_COLS})
     return buf.getvalue().encode("utf-8")
+
+
+def _live_trace(db, row: dict) -> None:
+    """Re-run the reference lookups for one code and show the actual rows at each hop."""
+    code, system = row["code"], row["code_system"]
+    substance = (row.get("group_name") or "").strip()
+    trail = row.get("audit_trail")
+    if isinstance(trail, str):
+        try:
+            trail = json.loads(trail)
+        except json.JSONDecodeError:
+            trail = []
+    if trail:  # the agent.proposed node holds "Brand (SUBSTANCE) — ..."
+        m = re.search(r"\(([^)]+)\)", trail[0].get("detail") or "")
+        if m:
+            substance = m.group(1).strip()
+    refs = row.get("reference_versions")
+    if isinstance(refs, str):
+        try:
+            refs = json.loads(refs)
+        except json.JSONDecodeError:
+            refs = {}
+    version = (refs or {}).get("crosswalk", "2026-10")
+    sub, brand = f"%{substance.lower()}%", f"%{(row.get('group_name') or '').lower()}%"
+
+    st.markdown(f"**Live trace for `{code}`** — substance `{substance}`, crosswalk `{version}`")
+    def grid(cap, sql, p):
+        st.caption(cap)
+        st.dataframe(db.execute(sql, p), use_container_width=True, hide_index=True)
+
+    grid("① ndc_product — substance → NDCs, route, form",
+         "SELECT product_ndc,proprietary_name,route,dosage_form FROM ndc_product "
+         "WHERE lower(substance_name) LIKE :q ORDER BY product_ndc LIMIT 8", {"q": sub})
+    grid("② product_admin — analyst self-admin flag",
+         "SELECT product_ndc9,brand,route,self_administered FROM product_admin "
+         "WHERE lower(substance) LIKE :q LIMIT 8", {"q": sub})
+    grid(f"③ crosswalk ({version}) — NDC → J-code",
+         "SELECT hcpcs_code,ndc11,drug_name,billunitspkg FROM crosswalk WHERE reference_version=:v "
+         "AND (lower(drug_name) LIKE :s OR lower(drug_name) LIKE :b) LIMIT 8",
+         {"v": version, "s": sub, "b": brand})
+    if system == "HCPCS":
+        grid(f"④ hcpcs ({version}) — validate the code",
+             "SELECT code,short_description,termination_date FROM hcpcs "
+             "WHERE reference_version=:v AND code=:c", {"v": version, "c": code})
+    grid("⑤ claims_frequency — aggregate (no PHI)",
+         "SELECT code_system,code,channel,claim_count FROM claims_frequency WHERE code=:c", {"c": code})
 
 
 def render() -> None:
@@ -108,6 +155,8 @@ def render() -> None:
         # Laid out as a table (not a stacked list) so the whole path reads at a glance.
         st.table([{"step": i + 1, "node": s.get("node"), "detail": s.get("detail")}
                   for i, s in enumerate(trail or [])])
+        if st.toggle("Show the live table trace (actual rows at each hop)") and row:
+            _live_trace(db, row)
     else:
         st.caption("No codes match the current filters.")
 
