@@ -97,7 +97,7 @@ def render() -> None:
                "billing rule → claims → decision.")
     codes = [r["code"] for r in filtered if r.get("code")]
     if codes:
-        pick = st.selectbox("Trace a code's derivation", codes)
+        pick = st.selectbox("Trace a code", codes)
         row = next((r for r in filtered if r.get("code") == pick), None)
         trail = row.get("audit_trail") if row else None
         if isinstance(trail, str):
@@ -105,8 +105,9 @@ def render() -> None:
                 trail = json.loads(trail)
             except json.JSONDecodeError:
                 trail = []
-        for i, step in enumerate(trail or [], 1):
-            st.markdown(f"**{i}. `{step.get('node')}`** — {step.get('detail')}")
+        # Laid out as a table (not a stacked list) so the whole path reads at a glance.
+        st.table([{"step": i + 1, "node": s.get("node"), "detail": s.get("detail")}
+                  for i, s in enumerate(trail or [])])
     else:
         st.caption("No codes match the current filters.")
 

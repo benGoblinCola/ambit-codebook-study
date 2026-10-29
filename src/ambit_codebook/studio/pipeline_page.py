@@ -69,23 +69,24 @@ def render() -> None:
                     s["status"] = "failed"
                     break
 
-    for s in states:
-        open_it = s["status"] != "succeeded"
-        with st.expander(f"{_ICON.get(s['status'], '•')}  {s['name']} — {s['status']}", expanded=open_it):
-            if s.get("input"):
-                st.caption("input")
-                st.json(_short(s["input"]), expanded=False)
-            if s.get("output"):
-                st.caption("output")
-                st.json(_short(s["output"]), expanded=False)
+    # States laid out as a flat, scannable table (no expanders).
+    st.table([{"#": i + 1, "state": s["name"],
+               "status": f"{_ICON.get(s['status'], '•')} {s['status']}"}
+              for i, s in enumerate(states)])
 
     if status == "RUNNING":
         st.info("Running… this page refreshes automatically.")
         time.sleep(2)
         st.rerun()
     elif status == "SUCCEEDED":
-        out = _short(d.get("output"))
+        out = _short(d.get("output")) or {}
+        ev = out.get("eval") or {}
         st.success("Pipeline succeeded — open the **Books** page to review and export.")
-        st.json(out, expanded=True)
+        c = st.columns(4)
+        c[0].metric("Candidates", out.get("candidate_count", "—"))
+        c[1].metric("Codebook rows", out.get("row_count", "—"))
+        c[2].metric("Eval", f"{ev.get('passed_count', '—')}/{ev.get('total', '—')}")
+        c[3].metric("Version", out.get("codebook_version", "—"))
+        st.caption(f"Published: {out.get('published_to', '—')}")
     else:
         st.error(f"Pipeline {status}. {failure or ''}")
