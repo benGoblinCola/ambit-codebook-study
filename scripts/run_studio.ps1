@@ -2,8 +2,8 @@
 # Then, in a SECOND terminal, start the tunnel to get a public HTTPS link:
 #     .\cloudflared.exe tunnel --url http://localhost:8603
 #
-# The username is JBPoquelin; you'll be prompted for the password (so it's never
-# stored on disk). Set $env:STUDIO_PASSWORD beforehand to skip the prompt.
+# You'll be prompted for the username and password (so they're never stored on disk).
+# Set $env:STUDIO_USERNAME / $env:STUDIO_PASSWORD beforehand to skip the prompts.
 $ErrorActionPreference = "Stop"
 Set-Location "$PSScriptRoot\.."
 
@@ -16,7 +16,7 @@ if (Test-Path $envFile) {
     }
 }
 
-$env:STUDIO_USERNAME = "JBPoquelin"
+if (-not $env:STUDIO_USERNAME) { $env:STUDIO_USERNAME = Read-Host "Studio username" }
 if (-not $env:STUDIO_PASSWORD) { $env:STUDIO_PASSWORD = Read-Host "Studio password" }
 $env:PYTHONPATH = "src"
 

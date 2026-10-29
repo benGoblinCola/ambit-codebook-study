@@ -17,7 +17,7 @@ if (Test-Path $envFile) {
     }
 }
 
-$env:STUDIO_USERNAME = "JBPoquelin"
+if (-not $env:STUDIO_USERNAME) { $env:STUDIO_USERNAME = Read-Host "Studio username" }
 if (-not $env:STUDIO_PASSWORD) { $env:STUDIO_PASSWORD = Read-Host "Studio password" }
 $env:PYTHONPATH = "src"
 
@@ -49,7 +49,7 @@ if ($url) {
     Write-Host "============================================================" -ForegroundColor Green
     Write-Host "  Codebook Studio is LIVE:" -ForegroundColor Green
     Write-Host "    $url" -ForegroundColor Cyan
-    Write-Host "  login:  JBPoquelin  /  (your password)" -ForegroundColor Green
+    Write-Host "  login:  (your username) / (your password)" -ForegroundColor Green
     Write-Host "============================================================" -ForegroundColor Green
 } else {
     Write-Host "Could not read the tunnel URL yet. Check: $err" -ForegroundColor Yellow
